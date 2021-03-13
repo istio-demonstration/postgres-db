@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  storageClassName: postgres-cloud-ssd
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+# How do we want it implemented
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: postgres-cloud-ssd
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-db
+spec:
+  selector:
+    matchLabels:
+      app: postgres-db
+  replicas: 1
+  template: # template for the pods
+    metadata:
+      labels:
+        app: postgres-db
+        version: original
+    spec:
+      containers:
+      - name: postgres-db
+        image: postgres:latest
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1000M
+
+        env:
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              configMapKeyRef:
+                name: data-configuration
+                key: database.password
+        volumeMounts:
+          - name: db-persistent-storage
+            mountPath: /var/lib/postgresql/data
+      
+      volumes:
+        - name: db-persistent-storage
+          # pointer to the configuration of HOW we want the mount to be implemented
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: postgres-db
+spec:
+  selector:
+    app: postgres-db
+  ports:
+    - name: mssql-port
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP
+
