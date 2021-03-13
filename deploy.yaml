@@ -52,7 +52,9 @@ spec:
         volumeMounts:
           - name: db-persistent-storage
             mountPath: /var/lib/postgresql/data
-      
+            # https://stackoverflow.com/questions/51168558/how-to-mount-a-postgresql-volume-using-aws-ebs-in-kubernete
+            #  need initially empty subPath of your volume (empty /postgres subfolder on your PV for example) mounted to appropriate mount point (/var/lib/posgresql/data) in your pod
+            subPath: postgres
       volumes:
         - name: db-persistent-storage
           # pointer to the configuration of HOW we want the mount to be implemented
