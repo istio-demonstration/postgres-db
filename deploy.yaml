@@ -60,6 +60,9 @@ spec:
           # pointer to the configuration of HOW we want the mount to be implemented
           persistentVolumeClaim:
             claimName: postgres-pvc
+        ports:
+        - containerPort: 5432
+          name: postgresql
 
 ---
 kind: Service
