@@ -71,8 +71,8 @@ spec:
     app: postgres-db
   ports:
     - name: mssql-port
-      port: 5432
       protocol: TCP
+      port: 5432
       targetPort: 5432
   type: ClusterIP
 
