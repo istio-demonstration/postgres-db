@@ -52,7 +52,7 @@ spec:
         volumeMounts:
           - name: db-persistent-storage
             mountPath: /var/lib/postgresql/data
-      
+            subPath: postgres
       volumes:
         - name: db-persistent-storage
           # pointer to the configuration of HOW we want the mount to be implemented
