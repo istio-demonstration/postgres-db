@@ -38,6 +38,8 @@ spec:
       - name: postgres-db
         image: postgres:latest
         imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5432
         resources:
           requests:
             cpu: 500m
@@ -71,5 +73,5 @@ spec:
   - port: 5432
     protocol: TCP
     targetPort: 5432
-  type: ClusterIP
+  type: LoadBalancer
 
