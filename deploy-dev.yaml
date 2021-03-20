@@ -1,0 +1,85 @@
+  
+# PVC and PV
+# What do want?
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+# How do we want it implemented
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-storage
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/mssqldb/"
+    type: DirectoryOrCreate
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-db
+spec:
+  selector:
+    matchLabels:
+      app: postgres-db
+  replicas: 1
+  template: # template for the pods
+    metadata:
+      labels:
+        app: postgres-db
+        version: original
+    spec:
+      containers:
+      - name: postgres-db
+        image: postgres:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5432
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1000M
+
+        env:
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              configMapKeyRef:
+                name: data-configuration
+                key: database.password
+        volumeMounts:
+          - name: db-persistent-storage
+            mountPath: /var/lib/postgresql/data
+            subPath: postgres
+      volumes:
+        - name: db-persistent-storage
+          # pointer to the configuration of HOW we want the mount to be implemented
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: postgres-db
+spec:
+  selector:
+    app: postgres-db
+  ports:
+  - port: 5432
+    protocol: TCP
+    targetPort: 5432
+  type: LoadBalancer
+
